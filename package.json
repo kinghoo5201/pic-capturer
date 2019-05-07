@@ -1,0 +1,39 @@
+{
+  "name": "pic-capturer",
+  "version": "1.0.0",
+  "description": "站点图片抓取对比工具",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build && node dist/index",
+    "dev": "nodemon dist/index develop",
+    "watch": "rm -rf ./dist && tsc -w",
+    "build": "rm -rf ./dist && tsc",
+    "commit": "git add . && git commit -m \"auto commit by shell\" && ((git pull && git push) || git reset HEAD)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kinghoo5201/pic-capturer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kinghoo5201/pic-capturer/issues"
+  },
+  "homepage": "https://github.com/kinghoo5201/pic-capturer#readme",
+  "dependencies": {
+    "@types/compression": "0.0.36",
+    "@types/express": "4.16.1",
+    "@types/lodash": "4.14.123",
+    "compression": "1.7.3",
+    "ejs": "2.6.1",
+    "express": "4.16.3",
+    "lodash": "4.17.10"
+  },
+  "devDependencies": {
+    "husky": "^2.1.0",
+    "nodemon": "1.18.10",
+    "tslint": "5.14.0",
+    "typescript": "3.4.1"
+  }
+}
