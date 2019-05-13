@@ -4,7 +4,8 @@
   "description": "站点图片抓取对比工具",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon dist/index develop",
+    "start": "npm run build && ./node dist/index.js",
+    "dev": "nodemon ./dist/index.js develop",
     "watch": "rm -rf ./dist && tsc -w",
     "build": "rm -rf ./dist && tsc",
     "commit": "git add . && git commit -m \"auto commit by shell\" && ((git pull && git push && echo \"提交成功！\") || (git reset HEAD && echo \"pull出错，重置提交，请手动操作!\"))"
