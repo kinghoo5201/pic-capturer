@@ -4,9 +4,180 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
+    <title>截图工具-pptr</title>
+    <script src="/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
-    ccccc
+    <div class="container" id="container-box">
+      <div class="left-pannel">
+        <h4>浏览器实例窗口大小：</h4>
+        <blockquote>默认为当前窗口大小（拖动窗口会有影响）</blockquote>
+        <div class="input-group clearfix">
+          <input type="number" placeholder="宽" name="viewWidth" />
+          <input type="number" placeholder="高" name="viewHeight" />
+        </div>
+        <br />
+        <h4>截图配置</h4>
+        <blockquote>全屏和指定区域只能选一个</blockquote>
+        <div>是否全屏：<input type="checkbox" name="fullPage" /></div>
+        <div id="clip-opt"></div>
+        <br />
+        <h4>目标网站域名：</h4>
+        <blockquote>配置域名是为了分目录（根据域名）存储</blockquote>
+        <div class="input-group clearfix">
+          <input
+            type="text"
+            placeholder="域名:http://example.com"
+            name="domain"
+            style="width:100%;"
+          />
+        </div>
+        <br />
+        <h4>截图路径：</h4>
+        <div class="input-group clearfix">
+          <textarea
+            name="paths"
+            placeholder="一行一个路径名，可以是相对路径，也可以是绝对路径"
+          ></textarea>
+        </div>
+        <br />
+        <button class="submit" disabled>提交配置</button>
+      </div>
+      <div class="right-pannel"></div>
+    </div>
+    <script type="html/template" id="clip-template">
+      <blockquote>起点坐标从页面左上角开始算</blockquote>
+      <div class="input-group clearfix">
+        <input type="number" placeholder="起点x轴" name="clipX" dataRequired="true"/>
+        <input type="number" placeholder="起点y轴" name="clipY" dataRequired="true"/>
+        <input type="number" placeholder="宽度" name="clipWidth" dataRequired="true"/>
+        <input type="number" placeholder="高度" name="clipHeight" dataRequired="true"/>
+      </div>
+    </script>
+    <script>
+      +(function() {
+        $('[name="fullPage"]').attr("checked", true);
+        // 设置容器高度
+        function setHeight() {
+          $("#container-box").height(window.innerHeight);
+        }
+        // 截图区域配置
+        function setClip() {
+          if ($('[name="fullPage"]').prop("checked")) {
+            $("#clip-opt").html("");
+          } else {
+            $("#clip-opt").html($("#clip-template").html());
+          }
+        }
+        // 生成配置
+        function getOptions() {
+          var options = {};
+          var errField = "";
+          $(".left-pannel input,.left-pannel textarea").each(function() {
+            var field = $(this).attr("name");
+            var type = $(this).attr("type");
+            var value = $(this).val();
+            var isRequired = $(this).attr("dataRequired") === "true";
+            if (field === "viewHeight") {
+              options[field] = value || window.innerHeight;
+              return true;
+            }
+            if (field === "viewWidth") {
+              options[field] = value || window.innerWidth;
+              return true;
+            }
+            if (field === "fullPage") {
+              options[field] = $(this).prop("checked");
+              return true;
+            }
+            if (type === "number" && value !== "") {
+              options[field] = parseFloat(value);
+              return true;
+            }
+            if (isRequired && value === "") {
+              errField = $(this).attr("placeholder");
+              return false;
+            }
+            if (field === "paths") {
+              var arr = [];
+              var temp = value.split("\n");
+              temp.forEach(function(item) {
+                if (item) {
+                  arr.push(item);
+                }
+              });
+              options[field] = arr;
+              return true;
+            }
+            if (field === "domain" && value === "") {
+              errField = "域名";
+              return false;
+            }
+            options[field] = value;
+          });
+          if (errField) {
+            return alert("[" + errField + "]必须填写！");
+          }
+          fetch("/api-capture", {
+            method: "POST",
+            body: JSON.stringify(options),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }).then(function(res) {
+            console.log(res);
+          });
+        }
+        // 获取服务端是否有实例在运行
+        function getStatus() {
+          return new Promise(function(resolve) {
+            fetch("/api-status")
+              .then(function(res) {
+                if (res.status === 200) {
+                  return res.json();
+                }
+                console.warn("请求出现问题--statusCode:", res.status);
+                return {
+                  isRunning: false
+                };
+              })
+              .then(function(json) {
+                return resolve(json);
+              });
+          });
+        }
+        function getStatusLoop() {
+          getStatus().then(function(json) {
+            if (json.isRunning) {
+              setSubmit(true, "进行中，请稍后....");
+              setTimeout(getStatusLoop, 1000);
+            } else {
+              setSubmit(false, "提交配置");
+            }
+          });
+        }
+        // 配置提交按钮
+        function setSubmit(disabled, text) {
+          $(".submit")
+            .attr("disabled", disabled)
+            .text(text);
+        }
+
+        setHeight();
+        setClip();
+        getStatusLoop();
+
+        // 事件绑定
+        $(window).on("resize", setHeight);
+        $(document).on("click", '[name="fullPage"]', setClip);
+        $(document).on("blur", '[name="domain"]', function(e) {
+          var val = $(this).val();
+          val = val.replace(/\/+$/, "");
+          $(this).val(val);
+        });
+        $(document).on("click", ".submit", getOptions);
+      })();
+    </script>
   </body>
 </html>
