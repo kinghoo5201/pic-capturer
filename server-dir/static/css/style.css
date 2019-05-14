@@ -139,6 +139,7 @@ blockquote {
   justify-content: center;
   align-items: center;
   flex-direction: row;
+  border-bottom: 1px solid #ccc;
 }
 .pic-box .item .pics .pic {
   display: inline-block;
