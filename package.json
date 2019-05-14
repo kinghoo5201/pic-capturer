@@ -4,7 +4,7 @@
   "description": "站点图片抓取对比工具",
   "main": "index.js",
   "scripts": {
-    "start": "npm run build && ./node dist/index.js",
+    "start": "npm run build && node dist/index.js",
     "dev": "nodemon ./dist/index.js develop",
     "watch": "rm -rf ./dist && tsc -w",
     "build": "rm -rf ./dist && tsc",
