@@ -124,15 +124,29 @@ blockquote {
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content : center;
 }
 .pic-box .item .pics .pic {
   display: inline-block;
   border: 1px solid #cccccc;
   text-align: center;
   color: #666666;
+  max-height: 500px;
+  overflow-y: auto;
+  position: relative;
 }
 .pic-box .item .pics .pic img {
-  max-width: 500px;
-  max-height: 500px;
+  width: 100%;
+  height: auto;
   display: block;
+}
+.pic-box .item .pics .pic span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.4);
+  color: #ccc;
 }
