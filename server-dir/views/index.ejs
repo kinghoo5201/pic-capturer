@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>截图工具-pptr</title>
     <script src="/js/jquery.min.js"></script>
+    <script src="/js/imagediff.js"></script>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
@@ -33,6 +34,15 @@
               >只有2个网络连接时触发（至少500毫秒后）</option
             >
           </select>
+        </div>
+        额外等待时间(ms)：
+        <div class="input-group clearfix">
+          <input
+            type="number"
+            placeholder="在上述等待条件后额外等待时间"
+            name="waitFor"
+            style="width:100%;"
+          />
         </div>
         <br />
         <h4>截图配置</h4>
@@ -63,6 +73,8 @@
       </div>
       <div class="right-pannel">
         <div class="dir-titles">empty</div>
+        <hr />
+        <i class="diff-btn">对比</i>
         <hr />
         <div class="pic-box"></div>
       </div>
@@ -219,7 +231,10 @@
                 if (json.flag) {
                   var htmlStr = "";
                   json.paths.forEach(function(path) {
-                    var aTag = `<span data-dir="${path}">${path}</span>`;
+                    var aTag = `<span data-dir="${path}">
+                      ${path}
+                      <i class="delete-btn">删除</i>
+                    </span>`;
                     htmlStr += aTag;
                   });
                   $(".dir-titles").html(htmlStr);
@@ -276,6 +291,7 @@
                       .replace(/\{\{pics\}\}/, pics);
                   }
                   $(".pic-box").html(htmlStr);
+                  imgIsSuccess();
                 }
               });
           });
@@ -317,6 +333,57 @@
             .attr("disabled", disabled)
             .text(text);
         }
+        // 判断图片是否加载完成
+        function imgIsSuccess() {
+          $(".pic-box img").each(function() {
+            $(this).on("load", function() {
+              $(this).off();
+              $(this).attr("data-load", "done");
+            });
+          });
+        }
+        // 图片对比
+        function diffImg() {
+          var flag = true;
+          $(".pic-box img").each(function() {
+            if (!$(this).attr("data-load")) {
+              flag = false;
+            }
+          });
+          if (!flag) {
+            return diffImg();
+          }
+          $(".pic-box .pics").each(function() {
+            if ($(this).attr("data-diff")) {
+              // 如果已经对比过了就不对比
+              return true;
+            }
+            var imgs = $(this).find("img");
+            if (imgs.length !== 2) {
+              console.warn("图片数量不为2，跳过", imgs);
+              return true;
+            }
+            var first_dropped_img = imgs.eq(0).get(0);
+            var second_dropped_img = imgs.eq(1).get(0);
+            // compare them
+            var canvas = imagediff.createCanvas();
+            // set the dimensions
+            canvas.width = first_dropped_img.naturalWidth;
+            canvas.height = first_dropped_img.naturalHeight;
+            // add the css class
+            canvas.className += " big_canvas";
+            // center the canvas
+            var context = canvas.getContext("2d");
+            var c = imagediff.diff(first_dropped_img, second_dropped_img);
+            context.putImageData(c, 0, 0);
+            // give some info
+            var template = `<div class="pic"> <span>对比结果</span></div>`;
+            $(this).append(template);
+            $(this)
+              .find(".pic:last-child")
+              .append(canvas);
+          });
+        }
 
         setHeight();
         setClip();
@@ -339,6 +406,30 @@
             .removeClass("active");
           getPics(path);
         });
+        $(document).on("click", ".dir-titles span i.delete-btn", function(e) {
+          e.stopPropagation();
+          if (!confirm("确定要删除？")) {
+            return;
+          }
+          const dirName = $(this)
+            .parent()
+            .attr("data-dir");
+          fetch("/api-delete?dir=" + dirName)
+            .then(function(res) {
+              if (res.status < 400) {
+                return res.json();
+              }
+              return { flag: false, message: "请求错误！" };
+            })
+            .then(function(json) {
+              if (!json.flag) {
+                return alert(json.message);
+              }
+              $(".pic-box").html("");
+              getEntryDir();
+            });
+        });
+        $(document).on("click", ".diff-btn", diffImg);
       })();
     </script>
   </body>

@@ -18,7 +18,8 @@ export default class Capturer {
   public async screenShoot(
     url: string,
     screenShootOpt: puppeteer.ScreenshotOptions,
-    pageCfg: { [propsName: string]: any } = {}
+    pageCfg: { [propsName: string]: any } = {},
+    waitFor?: number
   ) {
     if (!this.page) {
       return false;
@@ -27,6 +28,9 @@ export default class Capturer {
       waitUntil: "load",
       ...pageCfg
     });
+    if (waitFor) {
+      await this.page.waitFor(waitFor);
+    }
     await this.page.screenshot(screenShootOpt);
     return true;
   }

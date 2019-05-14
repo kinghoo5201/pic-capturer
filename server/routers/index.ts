@@ -5,6 +5,7 @@ import * as util from "../utils";
 import path from "path";
 import Capturer from "../utils/Capturer";
 import puppeteer from "puppeteer";
+import child_process from "child_process";
 
 // pptr是否正在运行
 (global as any).isRunPptr = false;
@@ -17,7 +18,8 @@ async function loopCapture(
   paths: string[],
   domain: string,
   waitUntil: string,
-  shootCfg: puppeteer.ScreenshotOptions
+  shootCfg: puppeteer.ScreenshotOptions,
+  waitFor?: number
 ) {
   const domainDir: string = path.resolve(
     uploadDir,
@@ -35,9 +37,14 @@ async function loopCapture(
       path: path.resolve(domainDir, pthDir + "-" + timeId) + ".png",
       type: "png"
     };
-    await capturer.screenShoot(pth, cptCfg, {
-      waitUntil
-    });
+    await capturer.screenShoot(
+      pth,
+      cptCfg,
+      {
+        waitUntil
+      },
+      waitFor
+    );
   }
   (global as any).isRunPptr = false;
   return true;
@@ -63,6 +70,21 @@ function router(app: Express) {
       paths
     });
   });
+  app.get("/api-delete", function(req, res, next) {
+    const dir = req.query.dir;
+    if (!dir) {
+      return res.json({
+        flag: false,
+        message: "参数错误，需要传参数：dir"
+      });
+    }
+    const dirPath = path.resolve(uploadDir, dir);
+    child_process.execSync(`rm -rf ${dirPath}`);
+    return res.json({
+      flag: true,
+      message: "success"
+    });
+  });
   app.post("/api-capture", function handler(req, res, next) {
     const {
       viewWidth,
@@ -74,7 +96,8 @@ function router(app: Express) {
       clipHeight,
       domain,
       paths,
-      waitUntil
+      waitUntil,
+      waitFor
     } = (req as any).fields;
     const config: puppeteer.LaunchOptions = {
       //设置超时时间
@@ -107,7 +130,7 @@ function router(app: Express) {
       // 开始运行
       (global as any).isRunPptr = true;
       // 进行遍历抓取
-      loopCapture(paths, domain, waitUntil, snapCfg).then(() => {
+      loopCapture(paths, domain, waitUntil, snapCfg, waitFor).then(() => {
         console.log("截取完成完成");
       });
       return res.json({

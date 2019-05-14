@@ -78,7 +78,8 @@ blockquote {
   user-select: none;
 }
 
-.dir-titles span {
+.dir-titles span,
+.diff-btn {
   line-height: 32px;
   position: relative;
   display: inline-block;
@@ -109,9 +110,19 @@ blockquote {
 }
 
 .dir-titles span:hover,
+.diff-btn:hover,
 .dir-titles span.active {
   color: #1890ff;
   border-color: #1890ff;
+}
+.diff-btn {
+  font-style: normal;
+}
+
+.dir-titles span i {
+  font-style: normal;
+  color: red;
+  margin-left: 8px;
 }
 
 .pic-box {
@@ -124,6 +135,10 @@ blockquote {
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
 }
 .pic-box .item .pics .pic {
   display: inline-block;
@@ -133,7 +148,6 @@ blockquote {
   max-height: 500px;
   overflow-y: auto;
   position: relative;
-  max-width: 50%;
 }
 .pic-box .item .pics .pic img {
   width: 100%;
@@ -146,4 +160,11 @@ blockquote {
   left: 0;
   background: rgba(0, 0, 0, 0.4);
   color: #ccc;
+}
+
+.big_canvas {
+  margin-top: 22px;
+  /* width: 100%; */
+  /* height: auto; */
+  display: block;
 }
