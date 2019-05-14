@@ -4,9 +4,342 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
+    <title>截图工具-pptr</title>
+    <script src="/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
-    ccccc
+    <div class="container" id="container-box">
+      <div class="left-pannel">
+        <div class="loading-box-wrapper"></div>
+        <h4>浏览器实例窗口大小：</h4>
+        <blockquote>默认为当前窗口大小（拖动窗口会有影响）</blockquote>
+        <div class="input-group clearfix">
+          <input type="number" placeholder="宽" name="viewWidth" />
+          <input type="number" placeholder="高" name="viewHeight" />
+        </div>
+        <br />
+        <h4>截图等待</h4>
+        <div>
+          <select name="waitUntil">
+            <option value="load">页面的load事件触发时</option>
+            <option value="domcontentloaded"
+              >页面的 DOMContentLoaded 事件触发时</option
+            >
+            <option value="networkidle0"
+              >不再有网络连接时触发（至少500毫秒后）</option
+            >
+            <option value="networkidle2"
+              >只有2个网络连接时触发（至少500毫秒后）</option
+            >
+          </select>
+        </div>
+        <br />
+        <h4>截图配置</h4>
+        <blockquote>全屏和指定区域只能选一个</blockquote>
+        <div>是否全屏：<input type="checkbox" name="fullPage" /></div>
+        <div id="clip-opt"></div>
+        <br />
+        <h4>目标网站域名：</h4>
+        <blockquote>配置域名是为了分目录（根据域名）存储</blockquote>
+        <div class="input-group clearfix">
+          <input
+            type="text"
+            placeholder="域名:http://example.com"
+            name="domain"
+            style="width:100%;"
+          />
+        </div>
+        <br />
+        <h4>截图路径：</h4>
+        <div class="input-group clearfix">
+          <textarea
+            name="paths"
+            placeholder="一行一个路径名，可以是相对路径，也可以是绝对路径"
+          ></textarea>
+        </div>
+        <br />
+        <button class="submit" disabled>提交配置</button>
+      </div>
+      <div class="right-pannel">
+        <div class="dir-titles">empty</div>
+        <hr />
+        <div class="pic-box"></div>
+      </div>
+    </div>
+    <script type="html/template" id="pic-template">
+      <div class="item">
+        <div class="title">{{title}}</div>
+        <div class="pics clearfix">
+          <!--<div class="pic"></div>-->
+          {{pics}}
+        </div>
+      </div>
+    </script>
+    <script type="html/template" id="clip-template">
+      <blockquote>起点坐标从页面左上角开始算</blockquote>
+      <div class="input-group clearfix">
+        <input type="number" placeholder="起点x轴" name="clipX" dataRequired="true"/>
+        <input type="number" placeholder="起点y轴" name="clipY" dataRequired="true"/>
+        <input type="number" placeholder="宽度" name="clipWidth" dataRequired="true"/>
+        <input type="number" placeholder="高度" name="clipHeight" dataRequired="true"/>
+      </div>
+    </script>
+    <script type="html/template" id="loading-template">
+      <div class="loading-box">
+        <div class="loading">
+          <img src="/img/landing.svg"><br />
+          截图进行中...
+        </div>
+      </div>
+    </script>
+    <script>
+      +(function() {
+        $('[name="fullPage"]').attr("checked", true);
+
+        function timeFormat(time = new Date(), formate = "y-m-d h:i:s") {
+          //y|Y年年,M|m月,d|D日,h|H小时,i|I分钟,s|S秒
+          let times = time.constructor.name === "Date" ? time : new Date(time),
+            Y = times.getFullYear(),
+            M = times.getMonth() + 1,
+            D = times.getDate(),
+            h = times.getHours(),
+            m = times.getMinutes(),
+            s = times.getSeconds();
+          return formate
+            .replace(/y/gi, Y)
+            .replace(/m/gi, M >= 10 ? M : "0" + M)
+            .replace(/d/gi, D >= 10 ? D : "0" + D)
+            .replace(/h/gi, h >= 10 ? h : "0" + h)
+            .replace(/i/gi, m >= 10 ? m : "0" + m)
+            .replace(/s/gi, s >= 10 ? s : "0" + s);
+        }
+        // 设置容器高度
+        function setHeight() {
+          $("#container-box").height(window.innerHeight);
+        }
+        // 截图区域配置
+        function setClip() {
+          if ($('[name="fullPage"]').prop("checked")) {
+            $("#clip-opt").html("");
+          } else {
+            $("#clip-opt").html($("#clip-template").html());
+          }
+        }
+        // loading
+        function setLoading(isSet) {
+          if (isSet) {
+            $(".loading-box-wrapper").html($("#loading-template").html());
+          } else {
+            $(".loading-box-wrapper").html("");
+          }
+        }
+        // 生成配置
+        function getOptions() {
+          var options = {};
+          var errField = "";
+          $(
+            ".left-pannel input,.left-pannel textarea,.left-pannel select"
+          ).each(function() {
+            var field = $(this).attr("name");
+            var type = $(this).attr("type");
+            var value = $(this).val();
+            var isRequired = $(this).attr("dataRequired") === "true";
+            if (field === "viewHeight") {
+              options[field] = value || window.innerHeight;
+              return true;
+            }
+            if (field === "viewWidth") {
+              options[field] = value || window.innerWidth;
+              return true;
+            }
+            if (field === "fullPage") {
+              options[field] = $(this).prop("checked");
+              return true;
+            }
+            if (type === "number" && value !== "") {
+              options[field] = parseFloat(value);
+              return true;
+            }
+            if (isRequired && value === "") {
+              errField = $(this).attr("placeholder");
+              return false;
+            }
+            if (field === "paths") {
+              var arr = [];
+              var temp = value.split("\n");
+              temp.forEach(function(item) {
+                if (item) {
+                  var url = item;
+                  if (!/^http/.test(item)) {
+                    url = $('[name="domain"]').val() + item;
+                  }
+                  if (arr.indexOf(url) < 0) {
+                    // 前端去重
+                    arr.push(url);
+                  }
+                }
+              });
+              options[field] = arr;
+              return true;
+            }
+            if (field === "domain" && value === "") {
+              errField = "域名";
+              return false;
+            }
+            options[field] = value;
+          });
+          if (errField) {
+            return alert("[" + errField + "]必须填写！");
+          }
+          fetch("/api-capture", {
+            method: "POST",
+            body: JSON.stringify(options),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }).then(function(res) {
+            getStatusLoop();
+          });
+        }
+        // 获取入口路径列表
+        function getEntryDir(path) {
+          return new Promise(function(resolve) {
+            const api = path ? "/api-getDir?path=" + path : "/api-getDir";
+            fetch(api)
+              .then(function(res) {
+                if (res.status < 400) {
+                  return res.json();
+                }
+                return {
+                  flag: false
+                };
+              })
+              .then(function(json) {
+                if (json.flag) {
+                  var htmlStr = "";
+                  json.paths.forEach(function(path) {
+                    var aTag = `<span data-dir="${path}">${path}</span>`;
+                    htmlStr += aTag;
+                  });
+                  $(".dir-titles").html(htmlStr);
+                  $(".dir-titles span").trigger("click");
+                }
+              });
+          });
+        }
+        /** 获取详细文件列表*/
+        function getPics(filePath) {
+          return new Promise(function(resolve) {
+            const api = filePath
+              ? "/api-getDir?path=" + filePath
+              : "/api-getDir";
+            fetch(api)
+              .then(function(res) {
+                if (res.status < 400) {
+                  return res.json();
+                }
+                return {
+                  flag: false
+                };
+              })
+              .then(function(json) {
+                if (json.flag) {
+                  var htmlStr = "";
+                  var template = $("#pic-template").html();
+                  var picObj = {};
+                  json.paths.forEach(function(path) {
+                    var time = path
+                      .split("-")
+                      .pop()
+                      .split(".")[0];
+                    var title = path.replace(`-${time}.png`, "");
+                    if (!picObj[title]) {
+                      picObj[title] = [];
+                    }
+                    picObj[title].push({
+                      path,
+                      time: timeFormat(parseFloat(time)),
+                      title
+                    });
+                  });
+                  for (const title in picObj) {
+                    var pic = `<div class="pic"><img src="/upload/${filePath}/{{path}}" /> <span>{{time}}</span></div>`;
+                    var pics = "";
+                    picObj[title].forEach(function(item) {
+                      pics += pic
+                        .replace(/\{\{path\}\}/, item.path)
+                        .replace(/\{\{time\}\}/, item.time);
+                    });
+                    htmlStr += template
+                      .replace(/\{\{title\}\}/, title)
+                      .replace(/\{\{pics\}\}/, pics);
+                  }
+                  $(".pic-box").html(htmlStr);
+                }
+              });
+          });
+        }
+        // 获取服务端是否有实例在运行
+        function getStatus() {
+          return new Promise(function(resolve) {
+            fetch("/api-status")
+              .then(function(res) {
+                if (res.status < 400) {
+                  return res.json();
+                }
+                console.warn("请求出现问题--statusCode:", res.status);
+                return {
+                  isRunning: false
+                };
+              })
+              .then(function(json) {
+                return resolve(json);
+              });
+          });
+        }
+        function getStatusLoop() {
+          getStatus().then(function(json) {
+            if (json.isRunning) {
+              setLoading(true);
+              setSubmit(true, "进行中，请稍后....");
+              setTimeout(getStatusLoop, 1000);
+            } else {
+              setLoading(false);
+              setSubmit(false, "提交配置");
+              getEntryDir();
+            }
+          });
+        }
+        // 配置提交按钮
+        function setSubmit(disabled, text) {
+          $(".submit")
+            .attr("disabled", disabled)
+            .text(text);
+        }
+
+        setHeight();
+        setClip();
+        getStatusLoop();
+
+        // 事件绑定
+        $(window).on("resize", setHeight);
+        $(document).on("click", '[name="fullPage"]', setClip);
+        $(document).on("blur", '[name="domain"]', function(e) {
+          var val = $(this).val();
+          val = val.replace(/\/+$/, "");
+          $(this).val(val);
+        });
+        $(document).on("click", ".submit", getOptions);
+        $(document).on("click", ".dir-titles span", function() {
+          var path = $(this).attr("data-dir");
+          $(this)
+            .addClass("active")
+            .siblings()
+            .removeClass("active");
+          getPics(path);
+        });
+      })();
+    </script>
   </body>
 </html>

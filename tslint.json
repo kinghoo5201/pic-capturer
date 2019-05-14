@@ -1,5 +1,4 @@
 {
-  "extends": ["tslint:latest", "tslint-config-prettier"],
   "defaultSeverity": "error",
   "rules": {
     "object-literal-sort-keys": false,
