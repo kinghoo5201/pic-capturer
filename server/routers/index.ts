@@ -21,7 +21,7 @@ async function loopCapture(
 ) {
   const domainDir: string = path.resolve(
     uploadDir,
-    domain.replace(/^https?:\/\//, "").replace(/[^a-zA-Z]/g, "_")
+    domain.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9]/g, "_")
   );
   const timeId: number = Date.now();
   if (!util.fsExists(domainDir)) {
@@ -29,7 +29,7 @@ async function loopCapture(
   }
   for (const i in paths) {
     const pth = paths[i];
-    const pthDir = pth.replace(domain, "").replace(/[^a-zA-Z]/g, "_");
+    const pthDir = pth.replace(domain, "").replace(/[^a-zA-Z0-9]/g, "_");
     const cptCfg: puppeteer.ScreenshotOptions = {
       ...shootCfg,
       path: path.resolve(domainDir, pthDir + "-" + timeId) + ".png",
