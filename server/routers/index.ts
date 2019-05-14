@@ -55,7 +55,9 @@ function router(app: Express) {
   app.get("/api-getDir", function(req, res, next) {
     const pth = req.query.path;
     const dir = pth ? path.resolve(uploadDir, pth) : uploadDir;
-    const paths = fs.readdirSync(dir).filter(item => item !== ".DS_Store");
+    const paths = fs
+      .readdirSync(dir)
+      .filter(item => item !== ".DS_Store" && item !== ".gitignore");
     return res.json({
       flag: true,
       paths

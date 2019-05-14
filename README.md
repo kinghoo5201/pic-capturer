@@ -4,6 +4,13 @@
 
 [中文 api](https://zhaoqize.github.io/puppeteer-api-zh_CN/)
 
+安装方法
+
+1. `git clone`
+2. `npm i`
+3. `npm start`
+4. 打开 `localhost:1234`，具体端口看终端，可能端口被占用会提升端口号
+
 使用方法，
 
 1. 填写域名（用来当做目录来存储），比如http://localhost:8000

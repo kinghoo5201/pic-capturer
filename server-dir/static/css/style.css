@@ -124,10 +124,6 @@ blockquote {
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content : center;
 }
 .pic-box .item .pics .pic {
   display: inline-block;
@@ -137,6 +133,7 @@ blockquote {
   max-height: 500px;
   overflow-y: auto;
   position: relative;
+  max-width: 50%;
 }
 .pic-box .item .pics .pic img {
   width: 100%;
