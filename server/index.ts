@@ -17,6 +17,18 @@ const app = express();
 app.setMaxListeners(0);
 app.use(compression());
 
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type,Content-Length, Authorization, Accept,X-Requested-With"
+    );
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("X-Powered-By", " 3.2.1");
+    return next();
+});
+
 //这里创建文件，如果不存在的话
 app.use((req, res, next) => {
     const uploadDir = path.resolve(__dirname, "../server-dir/static/upload");

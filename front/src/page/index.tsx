@@ -1,5 +1,6 @@
 import React from 'react';
 import { connectModel } from '../util';
+import './index.scss';
 
 @connectModel(
     (state: any) => ({
@@ -11,10 +12,14 @@ import { connectModel } from '../util';
 )
 export default class App extends React.Component<any, any>{
     public render() {
-        console.log(this.props);
         return (
-            <div>
-                welcome to react-template
+            <div className="container">
+                <div className="left-panel">
+                    left
+                </div>
+                <div className="right-panel">
+                    right
+                </div>
             </div>
         );
     }
